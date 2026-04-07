@@ -31,3 +31,7 @@ Then open http://localhost:5000
 
 ## Disclaimer
 For educational and authorized security research purposes only.
+
+## Screenshots
+![CLI](Screenshot_2026-04-06_22_39_14.png)
+![Web UI](Screenshot_2026-04-06_22_40_49.png)
