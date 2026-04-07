@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phishing Detector</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f0f2f5;
+    color: #1a1a1a;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  .wrapper {
+    max-width: 620px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-size: 26px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: #111;
+  }
+
+  .tagline {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 32px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #444;
+    margin-bottom: 8px;
+  }
+
+  input[type="text"] {
+    width: 100%;
+    padding: 11px 14px;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 12px;
+  }
+
+  input[type="text"]:focus {
+    border-color: #4f6ef7;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    background: #4f6ef7;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  button:hover { background: #3d5ce5; }
+  button:disabled { background: #aaa; cursor: not-allowed; }
+
+  .hint {
+    font-size: 12px;
+    color: #999;
+    margin-top: 10px;
+  }
+
+  .hint span {
+    cursor: pointer;
+    color: #4f6ef7;
+    margin-right: 8px;
+  }
+
+  .hint span:hover { text-decoration: underline; }
+
+  /* Result */
+  .result { display: none; }
+  .result.show { display: block; }
+
+  .verdict-box {
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .verdict-box.phishing { background: #fff0f0; border: 1.5px solid #ffcdd2; }
+  .verdict-box.suspicious { background: #fffbf0; border: 1.5px solid #ffe082; }
+  .verdict-box.safe { background: #f0fff4; border: 1.5px solid #b2dfdb; }
+
+  .verdict-label {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 4px;
+  }
+
+  .verdict-text {
+    font-size: 28px;
+    font-weight: 600;
+  }
+
+  .phishing .verdict-text { color: #e53935; }
+  .suspicious .verdict-text { color: #f9a825; }
+  .safe .verdict-text { color: #2e7d32; }
+
+  .risk-score {
+    text-align: right;
+  }
+
+  .risk-number {
+    font-size: 36px;
+    font-weight: 600;
+  }
+
+  .phishing .risk-number { color: #e53935; }
+  .suspicious .risk-number { color: #f9a825; }
+  .safe .risk-number { color: #2e7d32; }
+
+  .risk-label { font-size: 12px; color: #999; }
+
+  .bar-wrap {
+    height: 6px;
+    background: #eee;
+    border-radius: 3px;
+    margin-top: 16px;
+    overflow: hidden;
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.6s ease;
+  }
+
+  .phishing .bar-fill { background: #e53935; }
+  .suspicious .bar-fill { background: #f9a825; }
+  .safe .bar-fill { background: #2e7d32; }
+
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #444;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .flag {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 10px 12px;
+    background: #fffbf0;
+    border-left: 3px solid #f9a825;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #333;
+    margin-bottom: 8px;
+  }
+
+  .flag-icon { color: #f9a825; flex-shrink: 0; }
+
+  .no-flags {
+    font-size: 13px;
+    color: #2e7d32;
+    padding: 10px 12px;
+    background: #f0fff4;
+    border-left: 3px solid #2e7d32;
+    border-radius: 6px;
+  }
+
+  .vt-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  .vt-stat {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .vt-num {
+    font-size: 24px;
+    font-weight: 600;
+    color: #111;
+  }
+
+  .vt-num.bad { color: #e53935; }
+  .vt-num.warn { color: #f9a825; }
+  .vt-num.good { color: #2e7d32; }
+
+  .vt-lbl {
+    font-size: 11px;
+    color: #999;
+    margin-top: 2px;
+    text-transform: uppercase;
+  }
+
+  .loading { display: none; text-align: center; padding: 20px; color: #666; font-size: 14px; }
+  .loading.show { display: block; }
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid #eee;
+    border-top-color: #4f6ef7;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 12px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .url-display {
+    font-size: 12px;
+    color: #999;
+    word-break: break-all;
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <h1>Phishing Detector</h1>
+  <p class="tagline">Check any URL for phishing indicators</p>
+
+  <div class="card">
+    <label>URL to check</label>
+    <input type="text" id="url-input" placeholder="https://example.com" autocomplete="off">
+
+    <label>VirusTotal API Key <span style="color:#999;font-weight:400">(optional)</span></label>
+    <input type="text" id="vt-input" placeholder="Leave blank to use heuristics only" autocomplete="off">
+
+    <button id="scan-btn" onclick="scan()">Check URL</button>
+
+    <div class="hint">
+      Try:
+      <span onclick="setUrl('https://paypal-secure-login.verify-account.xyz/confirm')">phishing sample</span>
+      <span onclick="setUrl('https://github.com')">legit site</span>
+      <span onclick="setUrl('http://192.168.1.1/admin/login')">raw IP</span>
+    </div>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    Scanning URL...
+  </div>
+
+  <div class="result" id="result">
+
+    <div class="verdict-box" id="verdict-box">
+      <div>
+        <div class="verdict-label">Verdict</div>
+        <div class="verdict-text" id="verdict-text"></div>
+        <div class="url-display" id="url-display"></div>
+      </div>
+      <div class="risk-score">
+        <div class="risk-number" id="risk-number"></div>
+        <div class="risk-label">risk %</div>
+      </div>
+      <div class="bar-wrap" style="display:none" id="bar-wrap">
+        <div class="bar-fill" id="bar-fill"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">Indicators</div>
+      <div id="flags"></div>
+    </div>
+
+    <div class="card" id="vt-card" style="display:none">
+      <div class="section-title">VirusTotal</div>
+      <div id="vt-content"></div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+function setUrl(url) {
+  document.getElementById('url-input').value = url;
+}
+
+async function scan() {
+  const url = document.getElementById('url-input').value.trim();
+  const vtKey = document.getElementById('vt-input').value.trim();
+  if (!url) return;
+
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('scan-btn').disabled = true;
+
+  try {
+    const resp = await fetch('/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, vt_key: vtKey }),
+    });
+    const data = await resp.json();
+    document.getElementById('loading').classList.remove('show');
+    if (data.error) { alert(data.error); return; }
+    render(data);
+  } catch(e) {
+    document.getElementById('loading').classList.remove('show');
+    alert('Could not connect to server.');
+  }
+
+  document.getElementById('scan-btn').disabled = false;
+}
+
+function render(data) {
+  const cls = data.verdict.toLowerCase();
+  const box = document.getElementById('verdict-box');
+  box.className = 'verdict-box ' + cls;
+
+  document.getElementById('verdict-text').textContent = data.verdict;
+  document.getElementById('url-display').textContent = data.url;
+  document.getElementById('risk-number').textContent = data.risk_percent + '%';
+
+  // bar
+  const barWrap = document.getElementById('bar-wrap');
+  barWrap.style.display = 'block';
+  barWrap.style.cssText = '';
+  document.getElementById('bar-fill').style.width = data.risk_percent + '%';
+
+  // flags
+  const flagsEl = document.getElementById('flags');
+  flagsEl.innerHTML = '';
+  if (data.flags && data.flags.length > 0) {
+    data.flags.forEach(f => {
+      flagsEl.innerHTML += `<div class="flag"><span class="flag-icon">⚠</span><span>${f}</span></div>`;
+    });
+  } else {
+    flagsEl.innerHTML = '<div class="no-flags">✓ No suspicious indicators found</div>';
+  }
+
+  // virustotal
+  const vtCard = document.getElementById('vt-card');
+  const vtContent = document.getElementById('vt-content');
+  if (data.virustotal && data.virustotal.status === 'ok') {
+    vtCard.style.display = 'block';
+    const vt = data.virustotal;
+    vtContent.innerHTML = `
+      <div class="vt-grid">
+        <div class="vt-stat"><div class="vt-num ${vt.malicious > 0 ? 'bad' : 'good'}">${vt.malicious}</div><div class="vt-lbl">Malicious</div></div>
+        <div class="vt-stat"><div class="vt-num ${vt.suspicious > 0 ? 'warn' : 'good'}">${vt.suspicious}</div><div class="vt-lbl">Suspicious</div></div>
+        <div class="vt-stat"><div class="vt-num good">${vt.harmless}</div><div class="vt-lbl">Clean</div></div>
+        <div class="vt-stat"><div class="vt-num">${vt.total_engines}</div><div class="vt-lbl">Engines</div></div>
+      </div>`;
+  } else {
+    vtCard.style.display = 'none';
+  }
+
+  document.getElementById('result').classList.add('show');
+}
+
+document.getElementById('url-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') scan();
+});
+</script>
+</body>
+</html>
